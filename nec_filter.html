@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEC Candidate Filter — E-Cell IIT Bombay</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #e8ff5a;
+    --accent-dim: #b8cc3a;
+    --text: #e8e8e8;
+    --muted: #888;
+    --danger: #ff4e4e;
+    --good: #4ecf78;
+    --warn: #f5a623;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.02em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* ── Config panel ── */
+  .config {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 640px) { .config { grid-template-columns: 1fr; } }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  label {
+    font-size: 11px;
+    font-family: var(--mono);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  input[type=number], select, textarea {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color .15s;
+    width: 100%;
+  }
+  input[type=number]:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+  select option { background: #1a1a1a; }
+
+  /* ── Upload area ── */
+  .upload-zone {
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(232,255,90,.03);
+  }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-label { color: var(--muted); font-size: 13px; }
+  .upload-label span { color: var(--accent); }
+  .file-hint { font-size: 11px; color: #555; margin-top: 4px; }
+
+  .file-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: var(--mono);
+    margin-top: 12px;
+  }
+  .file-chip .rm {
+    color: var(--danger); cursor: pointer; font-size: 16px; line-height: 1;
+  }
+
+  /* ── Paste area ── */
+  .paste-section {
+    margin-bottom: 24px;
+  }
+  .paste-section textarea {
+    height: 120px;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 11px;
+    font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em;
+    margin: 20px 0;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── Run button ── */
+  .run-btn {
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 4px;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    width: 100%;
+  }
+  .run-btn:hover { background: var(--accent-dim); }
+  .run-btn:active { transform: scale(.99); }
+  .run-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+  /* ── Progress ── */
+  .progress-wrap {
+    margin-top: 24px;
+    display: none;
+  }
+  .progress-wrap.visible { display: block; }
+  .progress-bar-bg {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    height: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width .3s;
+  }
+  .progress-log {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    min-height: 18px;
+  }
+
+  /* ── Results ── */
+  .results-section { margin-top: 48px; display: none; }
+  .results-section.visible { display: block; }
+
+  .results-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+  .results-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+  }
+  .results-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Candidate card ── */
+  .candidate-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: border-color .15s;
+  }
+  .candidate-card:hover { border-color: #444; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .rank-num {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 28px;
+    line-height: 1;
+  }
+  .candidate-name {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .candidate-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .score-pill {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 2px;
+    background: rgba(232,255,90,.12);
+    color: var(--accent);
+  }
+
+  .card-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 0 20px 12px;
+    background: var(--surface);
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+  .tag-ai { color: var(--danger); border-color: var(--danger); background: rgba(255,78,78,.08); }
+  .tag-video { color: var(--good); border-color: var(--good); background: rgba(78,207,120,.08); }
+  .tag-domain { color: var(--muted); border-color: #333; background: rgba(255,255,255,.04); }
+  .tag-warn { color: var(--warn); border-color: var(--warn); background: rgba(245,166,35,.08); }
+
+  .card-body {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+  .card-body.open { display: block; }
+
+  .analysis-block {
+    margin-bottom: 20px;
+  }
+  .analysis-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .analysis-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #ccc;
+  }
+
+  /* score bars */
+  .score-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr 36px;
+    gap: 6px 12px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .bar-label { font-size: 12px; color: var(--muted); }
+  .bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width .6s ease;
+  }
+  .bar-fill.mid { background: var(--warn); }
+  .bar-fill.low { background: var(--danger); }
+  .bar-val {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* video link */
+  .video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+    font-size: 12px;
+    font-family: var(--mono);
+    text-decoration: none;
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 6px 14px;
+    margin-top: 8px;
+    transition: background .15s;
+  }
+  .video-link:hover { background: rgba(232,255,90,.08); }
+
+  /* ai flag section */
+  .ai-flag-block {
+    background: rgba(255,78,78,.06);
+    border: 1px solid rgba(255,78,78,.25);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+  .ai-flag-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--danger);
+    margin-bottom: 6px;
+  }
+  .ai-flag-text { font-size: 13px; color: #ccc; line-height: 1.6; }
+
+  /* raw data toggle */
+  .raw-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 12px;
+    transition: border-color .15s, color .15s;
+  }
+  .raw-toggle:hover { border-color: #555; color: var(--text); }
+  .raw-data {
+    display: none;
+    margin-top: 12px;
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #888;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .raw-data.open { display: block; }
+
+  /* ── Video summary at bottom ── */
+  .video-summary {
+    margin-top: 40px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .video-summary-header {
+    background: var(--surface);
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .video-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .video-row:last-child { border-bottom: none; }
+  .video-row-name { font-size: 13px; font-weight: 500; }
+  .video-row-rank { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  /* ── Error ── */
+  .error-box {
+    background: rgba(255,78,78,.08);
+    border: 1px solid rgba(255,78,78,.3);
+    border-radius: 4px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #ff8080;
+    margin-top: 20px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* ── Accordion chevron ── */
+  .chevron {
+    font-size: 12px;
+    color: var(--muted);
+    transition: transform .2s;
+  }
+  .chevron.open { transform: rotate(180deg); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <span class="badge">E-Cell · IIT Bombay</span>
+    </div>
+    <h1>NEC Candidate Filter</h1>
+    <p class="subtitle">Upload your response sheet. The agent ranks candidates, flags AI-generated responses, and surfaces the best fits.</p>
+  </div>
+
+  <!-- Config -->
+  <div class="config">
+    <div class="field">
+      <label>Top N candidates to select</label>
+      <input type="number" id="topN" value="5" min="1" max="47">
+    </div>
+    <div class="field">
+      <label>Selection focus</label>
+      <select id="focus">
+        <option value="balanced">Balanced (all factors)</option>
+        <option value="execution">Execution-heavy</option>
+        <option value="communication">Communication-heavy</option>
+        <option value="experience">Experience-heavy</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>AI response handling</label>
+      <select id="aiMode">
+        <option value="flag">Flag but include</option>
+        <option value="penalize">Penalize score</option>
+        <option value="exclude">Auto-exclude</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept=".csv,.pdf,.tsv,.txt">
+    <div class="upload-icon">↑</div>
+    <div class="upload-label">Drop your file here or <span>browse</span></div>
+    <div class="file-hint">Accepts: CSV, TSV, TXT (tab-separated), PDF</div>
+  </div>
+  <div id="fileChips"></div>
+
+  <div class="divider">or paste raw data</div>
+
+  <!-- Paste -->
+  <div class="paste-section">
+    <div class="field">
+      <label>Paste CSV / TSV data directly</label>
+      <textarea id="pasteData" placeholder="Paste tab-separated or comma-separated rows here. First row = headers."></textarea>
+    </div>
+  </div>
+
+  <!-- Run -->
+  <button class="run-btn" id="runBtn" onclick="runFilter()">Run Filter →</button>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar"></div></div>
+    <div class="progress-log" id="progressLog">Initialising...</div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Results -->
+  <div class="results-section" id="resultsSection">
+    <div class="results-header">
+      <div class="results-title" id="resultsTitle"></div>
+      <div class="results-meta" id="resultsMeta"></div>
+    </div>
+    <div id="cardsContainer"></div>
+    <div id="videoSummary"></div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let uploadedFileContent = null;
+let uploadedFileName = null;
+
+// ── File upload ────────────────────────────────────────────────────────────
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+const fileChips  = document.getElementById('fileChips');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+function handleFile(file) {
+  if (!file) return;
+  uploadedFileName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  if (ext === 'pdf') {
+    // For PDF, try to read as text (basic extraction)
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Very basic: try to extract text-like content
+      const bytes = new Uint8Array(e.target.result);
+      let text = '';
+      for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] > 31 && bytes[i] < 127) text += String.fromCharCode(bytes[i]);
+      }
+      uploadedFileContent = text;
+      renderChip(file.name);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => { uploadedFileContent = e.target.result; renderChip(file.name); };
+    reader.readAsText(file);
+  }
+}
+
+function renderChip(name) {
+  fileChips.innerHTML = `<div class="file-chip">📄 ${name} <span class="rm" onclick="clearFile()">×</span></div>`;
+}
+
+function clearFile() {
+  uploadedFileContent = null;
+  uploadedFileName = null;
+  fileChips.innerHTML = '';
+  fileInput.value = '';
+}
+
+// ── CSV parser ─────────────────────────────────────────────────────────────
+function parseCSV(raw) {
+  const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return null;
+
+  function splitLine(line) {
+    // Handle tab-separated first
+    if (line.includes('\t')) return line.split('\t').map(s => s.trim().replace(/^"|"$/g, ''));
+    // CSV with possible quoted fields
+    const result = [];
+    let inQuote = false, cur = '';
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"' && !inQuote) { inQuote = true; continue; }
+      if (line[i] === '"' && inQuote) { inQuote = false; continue; }
+      if (line[i] === ',' && !inQuote) { result.push(cur.trim()); cur = ''; continue; }
+      cur += line[i];
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  const headers = splitLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = splitLine(lines[i]);
+    if (vals.every(v => !v)) continue;
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = vals[idx] || ''; });
+    rows.push(obj);
+  }
+  return { headers, rows };
+}
+
+// ── Progress helpers ───────────────────────────────────────────────────────
+function setProgress(pct, msg) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLog').textContent = msg;
+}
+function showProgress() { document.getElementById('progressWrap').classList.add('visible'); }
+function hideProgress() { document.getElementById('progressWrap').classList.remove('visible'); }
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg; box.classList.add('visible');
+}
+function clearError() { document.getElementById('errorBox').classList.remove('visible'); }
+
+// ── Column finder (fuzzy match the NEC headers) ────────────────────────────
+function findCol(headers, keywords) {
+  for (const kw of keywords) {
+    const found = headers.find(h => h.toLowerCase().includes(kw.toLowerCase()));
+    if (found) return found;
+  }
+  return null;
+}
+
+// ── AI detection heuristics ────────────────────────────────────────────────
+const AI_PHRASES = [
+  'as an ai', 'as a language model', 'certainly!', 'absolutely!', 'of course!',
+  'i would like to emphasize', 'in conclusion,', 'to summarize,', 'in summary,',
+  'first and foremost', 'it is worth noting', 'it is important to note',
+  'furthermore,', 'moreover,', 'in addition to the aforementioned',
+  'this is a multifaceted', 'at its core,', 'holistic approach',
+  'leverage synergies', 'paradigm shift', 'game-changer',
+  'i am passionate about', 'i am deeply passionate',
+  'i strongly believe', 'i firmly believe',
+  'innovative solutions', 'think outside the box',
+  'synergy', 'proactive approach', 'value proposition',
+  'transformative', 'impactful initiatives',
+  '1.', '2.', '3.', '4.', '5.',  // bullet-list style always in AI
+];
+
+function detectAI(text) {
+  if (!text || text.length < 20) return { score: 0, signals: [] };
+  const lower = text.toLowerCase();
+  const signals = [];
+
+  let score = 0;
+
+  // Phrase matching
+  for (const phrase of AI_PHRASES) {
+    if (lower.includes(phrase.toLowerCase())) {
+      signals.push(`Found phrase: "${phrase}"`);
+      score += phrase.length > 10 ? 12 : 6;
+    }
+  }
+
+  // Very uniform, long, punctuated sentences
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 5);
+  if (sentences.length >= 3) {
+    const avgLen = sentences.reduce((a, s) => a + s.length, 0) / sentences.length;
+    if (avgLen > 90) { score += 10; signals.push('Abnormally long sentences'); }
+    // Low variance in sentence length
+    const variance = sentences.reduce((a, s) => a + Math.abs(s.length - avgLen), 0) / sentences.length;
+    if (variance < 20) { score += 8; signals.push('Very uniform sentence length'); }
+  }
+
+  // Starts with "I am" or "I would" – very common in AI
+  if (/^(i am|i would|i firmly|i strongly)/i.test(text.trim())) {
+    score += 6; signals.push('Generic AI-style opener');
+  }
+
+  // Excessive word count for simple questions
+  const wc = text.split(/\s+/).length;
+  if (wc > 250) { score += 8; signals.push(`Unusually long response (${wc} words)`); }
+
+  // All caps emphasis
+  const capsWords = (text.match(/\b[A-Z]{3,}\b/g) || []).length;
+  if (capsWords > 4) { score += 5; signals.push('Excessive caps-emphasis'); }
+
+  // No personal specifics (names of real people/places)
+  // Just heuristic: ratio of first-person pronouns
+  const pronouns = (lower.match(/\b(i|my|me|we|our)\b/g) || []).length;
+  if (pronouns === 0 && text.length > 100) {
+    score += 10; signals.push('No first-person voice');
+  }
+
+  // Cap score
+  score = Math.min(score, 100);
+  return { score, signals: signals.slice(0, 5) };
+}
+
+// ── Scoring ────────────────────────────────────────────────────────────────
+function scoreCandidate(row, colMap, focus, aiMode) {
+  const scores = {};
+
+  // 1. Commitment
+  const commit = (row[colMap.commitment] || '').toLowerCase();
+  scores.commitment = commit.includes('yes') || commit.includes('absolutely') ? 10 : 0;
+
+  // 2. Hours
+  const hours = parseFloat(row[colMap.hours] || 0) || 0;
+  scores.hours = Math.min(hours / 20 * 10, 10);
+
+  // 3. Communication self-rating
+  const comm = parseFloat(row[colMap.comm] || 3);
+  scores.communication = (comm / 5) * 10;
+
+  // 4. Domains (number selected)
+  const domains = (row[colMap.domains] || '').split(/[,;]/).filter(d => d.trim().length > 2);
+  scores.domains = Math.min(domains.length * 2.5, 10);
+
+  // 5. Execution answer quality
+  const execText = row[colMap.execution] || '';
+  const execWords = execText.split(/\s+/).filter(Boolean).length;
+  const execSpecific = (execText.match(/\b(whatsapp|instagram|poster|faculty|email|class|dorm|canteen|notice board|qr|google form|flyer|dm|story|reel)\b/gi) || []).length;
+  scores.execution = Math.min((execWords / 60) * 5 + execSpecific * 0.8, 10);
+
+  // 6. Entrepreneurial mindset answer
+  const mindText = row[colMap.mindset] || '';
+  const mindWords = mindText.split(/\s+/).filter(Boolean).length;
+  scores.mindset = Math.min((mindWords / 40) * 6 + (mindText.length > 150 ? 2 : 0), 10);
+
+  // 7. Past experience
+  const hasPast = (row[colMap.hasPast] || '').toLowerCase().includes('yes');
+  const pastDesc = row[colMap.pastDesc] || '';
+  scores.experience = hasPast ? Math.min(5 + pastDesc.split(/\s+/).length / 30 * 5, 10) : 0;
+
+  // 8. Video bonus
+  const video = (row[colMap.video] || '').trim();
+  const hasVideo = video.length > 10 && (video.includes('http') || video.includes('drive') || video.includes('youtube') || video.includes('youtu.be'));
+  scores.video = hasVideo ? 10 : 0;
+
+  // 9. Tools proficiency
+  const tools = (row[colMap.tools] || '').split(/[,;]/).filter(t => t.trim().length > 1);
+  scores.tools = Math.min(tools.length * 2, 10);
+
+  // 10. Deadline handling
+  const deadlineText = row[colMap.deadline] || '';
+  const dlWords = deadlineText.split(/\s+/).filter(Boolean).length;
+  scores.teamwork = Math.min((dlWords / 30) * 7 + (deadlineText.length > 100 ? 2 : 0), 10);
+
+  // AI detection
+  const combinedText = [
+    row[colMap.mindset], row[colMap.execution], row[colMap.pastDesc], row[colMap.deadline]
+  ].filter(Boolean).join(' ');
+  const ai = detectAI(combinedText);
+
+  // Apply AI penalty
+  let aiPenalty = 0;
+  if (aiMode === 'penalize' && ai.score > 30) aiPenalty = Math.min(ai.score / 5, 15);
+
+  // Weights by focus
+  const weights = {
+    balanced:      { commitment:1, hours:0.8, communication:1, domains:0.7, execution:1.5, mindset:1, experience:1, video:1.2, tools:0.5, teamwork:1 },
+    execution:     { commitment:1, hours:1,   communication:0.6, domains:0.5, execution:2.5, mindset:0.8, experience:1, video:1, tools:0.8, teamwork:1.2 },
+    communication: { commitment:1, hours:0.7, communication:2, domains:0.7, execution:1,   mindset:1.2, experience:0.8, video:1.5, tools:0.4, teamwork:1.2 },
+    experience:    { commitment:1, hours:0.8, communication:0.8, domains:0.8, execution:1,   mindset:0.8, experience:2.5, video:1, tools:1, teamwork:0.8 },
+  };
+  const w = weights[focus] || weights.balanced;
+
+  let raw = 0, maxRaw = 0;
+  for (const [key, val] of Object.entries(scores)) {
+    raw += (val * (w[key] || 1));
+    maxRaw += (10 * (w[key] || 1));
+  }
+  const total = Math.max(0, (raw / maxRaw) * 100 - aiPenalty);
+
+  return { scores, total: Math.round(total), ai, hasVideo, videoLink: hasVideo ? video : null, domains, tools };
+}
+
+// ── Column map builder ─────────────────────────────────────────────────────
+function buildColMap(headers) {
+  return {
+    name:       findCol(headers, ['Full Name', 'Name']),
+    phone:      findCol(headers, ['Phone', 'Mobile']),
+    email:      findCol(headers, ['Email']),
+    course:     findCol(headers, ['Course', 'Branch', 'Year']),
+    commitment: findCol(headers, ['ready for a full', 'commitment', 'Commit', '6-month']),
+    hours:      findCol(headers, ['hours per week', 'hours/week', 'Hours']),
+    comm:       findCol(headers, ['communication skills', 'Rate your comm']),
+    domains:    findCol(headers, ['domains of execution', 'domains', 'Strongest']),
+    mindset:    findCol(headers, ['entrepreneurial mindset', 'mindset']),
+    hasPast:    findCol(headers, ['relevant past experience', 'past experience', 'answered YES', 'Do you have']),
+    pastDesc:   findCol(headers, ['briefly describe', 'past experience and the results', 'describe your past']),
+    tools:      findCol(headers, ['tools are you proficient', 'Which tools', 'Tools']),
+    deadline:   findCol(headers, ['underperforming', 'deadlines', 'teammate', 'handle a situation']),
+    execution:  findCol(headers, ['0 budget', 'Execution Test', '50 people', 'step-by-step']),
+    video:      findCol(headers, ['video', 'Record a short', 'link below', 'Paste your']),
+    ready:      findCol(headers, ['Limited spots', 'Are you ready', 'executors']),
+    timestamp:  findCol(headers, ['Timestamp', 'Date', 'Time']),
+  };
+}
+
+// ── Render candidate card ──────────────────────────────────────────────────
+function renderBar(label, val, max = 10) {
+  const pct = Math.round((val / max) * 100);
+  const cls = pct >= 70 ? '' : pct >= 40 ? 'mid' : 'low';
+  return `
+    <div class="bar-label">${label}</div>
+    <div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+    <div class="bar-val">${val.toFixed(1)}</div>
+  `;
+}
+
+function generateSelectionReason(row, colMap, result, rank) {
+  const reasons = [];
+  const s = result.scores;
+  const name = (row[colMap.name] || 'Candidate').split(' ')[0];
+
+  if (result.hasVideo) reasons.push(`${name} submitted a video — showing initiative beyond the form.`);
+  if (s.execution >= 7) reasons.push(`Strong execution plan: their zero-budget event strategy showed real, actionable steps with local context.`);
+  if (s.experience >= 7) reasons.push(`Solid past experience with measurable results described.`);
+  if (s.communication >= 8) reasons.push(`Self-reported communication score of ${row[colMap.comm]}/5, backed by clear writing in responses.`);
+  if (s.commitment === 10) reasons.push(`Confirmed full 6-month commitment without hesitation.`);
+  if (s.hours >= 7) reasons.push(`Willing to commit ${row[colMap.hours]} hours/week — above average.`);
+  if (s.mindset >= 6) reasons.push(`Articulate understanding of entrepreneurial mindset in a team context.`);
+  if (result.domains.length >= 3) reasons.push(`Multi-domain strength: ${result.domains.slice(0,3).join(', ')}.`);
+  if (s.teamwork >= 6) reasons.push(`Showed a mature, proactive approach to handling underperforming teammates.`);
+
+  if (reasons.length === 0) reasons.push(`Ranked #${rank} based on weighted composite score across commitment, execution, experience, and communication criteria.`);
+
+  return reasons.join(' ');
+}
+
+function renderCard(row, colMap, result, rank, aiMode) {
+  const name = row[colMap.name] || '(No Name)';
+  const course = row[colMap.course] || '';
+  const email = row[colMap.email] || '';
+  const id = `card-${rank}`;
+  const excluded = aiMode === 'exclude' && result.ai.score > 40;
+
+  const aiTag = result.ai.score > 40
+    ? `<span class="tag tag-ai">AI Detected · ${result.ai.score}%</span>`
+    : result.ai.score > 20
+    ? `<span class="tag tag-warn">Possible AI · ${result.ai.score}%</span>`
+    : '';
+
+  const videoTag = result.hasVideo ? `<span class="tag tag-video">Video ✓</span>` : '';
+
+  const domainTags = result.domains.slice(0,4).map(d => `<span class="tag tag-domain">${d.trim()}</span>`).join('');
+
+  const aiSection = result.ai.score > 20 ? `
+    <div class="ai-flag-block">
+      <div class="ai-flag-title">⚠ AI Response Signals (${result.ai.score}/100)</div>
+      <div class="ai-flag-text">${result.ai.signals.join(' · ') || 'Generic phrasing patterns detected.'}</div>
+    </div>
+  ` : '';
+
+  const videoSection = result.hasVideo ? `
+    <div class="analysis-block">
+      <div class="analysis-label">Video Submission</div>
+      <a class="video-link" href="${result.videoLink}" target="_blank" rel="noopener">▶ Watch Video →</a>
+    </div>
+  ` : '';
+
+  const reasonText = generateSelectionReason(row, colMap, result, rank);
+
+  const rawRows = Object.entries(row)
+    .filter(([k]) => k && k !== 'undefined')
+    .map(([k, v]) => `${k}:\n  ${v}`)
+    .join('\n\n');
+
+  return `
+    <div class="candidate-card" id="${id}">
+      <div class="card-header" onclick="toggleCard('${id}')">
+        <div class="card-header-left">
+          <div class="rank-num">#${rank}</div>
+          <div>
+            <div class="candidate-name">${name}</div>
+            <div class="candidate-sub">${course}${email ? ' · ' + email : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="score-pill">${result.total}%</div>
+          <div class="chevron" id="chev-${id}">▼</div>
+        </div>
+      </div>
+      <div class="card-tags">
+        ${aiTag} ${videoTag} ${domainTags}
+      </div>
+      <div class="card-body" id="body-${id}">
+        ${aiSection}
+
+        <div class="analysis-block">
+          <div class="analysis-label">Why Selected</div>
+          <div class="analysis-text">${reasonText}</div>
+        </div>
+
+        <div class="analysis-label" style="margin-bottom:10px">Score Breakdown</div>
+        <div class="score-grid">
+          ${renderBar('Commitment', result.scores.commitment)}
+          ${renderBar('Hours / week', result.scores.hours)}
+          ${renderBar('Communication', result.scores.communication)}
+          ${renderBar('Domains', result.scores.domains)}
+          ${renderBar('Execution plan', result.scores.execution)}
+          ${renderBar('Mindset articulation', result.scores.mindset)}
+          ${renderBar('Past experience', result.scores.experience)}
+          ${renderBar('Video bonus', result.scores.video)}
+          ${renderBar('Tools proficiency', result.scores.tools)}
+          ${renderBar('Teamwork/deadline', result.scores.teamwork)}
+        </div>
+
+        ${videoSection}
+
+        <button class="raw-toggle" onclick="toggleRaw('${id}')">Show raw data</button>
+        <div class="raw-data" id="raw-${id}">${rawRows}</div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleCard(id) {
+  const body = document.getElementById('body-' + id);
+  const chev = document.getElementById('chev-' + id);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleRaw(id) {
+  document.getElementById('raw-' + id).classList.toggle('open');
+}
+
+// ── Main run ───────────────────────────────────────────────────────────────
+async function runFilter() {
+  clearError();
+  document.getElementById('resultsSection').classList.remove('visible');
+
+  const rawText = uploadedFileContent || document.getElementById('pasteData').value.trim();
+  if (!rawText || rawText.length < 30) {
+    showError('No data found. Upload a CSV/TSV file or paste your data into the text area above.');
+    return;
+  }
+
+  const topN = parseInt(document.getElementById('topN').value) || 5;
+  const focus = document.getElementById('focus').value;
+  const aiMode = document.getElementById('aiMode').value;
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+  showProgress();
+  setProgress(10, 'Parsing data...');
+
+  await tick();
+
+  const parsed = parseCSV(rawText);
+  if (!parsed || parsed.rows.length === 0) {
+    hideProgress();
+    showError('Could not parse the data. Make sure it is tab-separated or comma-separated with a header row.');
+    btn.disabled = false; btn.textContent = 'Run Filter →';
+    return;
+  }
+
+  setProgress(25, `Found ${parsed.rows.length} candidates. Building column map...`);
+  await tick();
+
+  const colMap = buildColMap(parsed.headers);
+
+  setProgress(40, 'Scoring candidates...');
+  await tick();
+
+  const scored = parsed.rows.map(row => {
+    const result = scoreCandidate(row, colMap, focus, aiMode);
+    return { row, result };
+  });
+
+  setProgress(60, 'Applying AI detection...');
+  await tick();
+
+  // Filter if exclude mode
+  let pool = scored;
+  if (aiMode === 'exclude') {
+    pool = scored.filter(c => c.result.ai.score <= 40);
+  }
+
+  // Sort descending
+  pool.sort((a, b) => b.result.total - a.result.total);
+
+  const selected = pool.slice(0, topN);
+
+  setProgress(80, 'Generating analysis...');
+  await tick();
+
+  // Render cards
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = selected.map((c, i) =>
+    renderCard(c.row, colMap, c.result, i + 1, aiMode)
+  ).join('');
+
+  // Video summary
+  const withVideo = selected.filter(c => c.result.hasVideo);
+  let videoHtml = '';
+  if (withVideo.length > 0) {
+    const rows = withVideo.map((c, i) => {
+      const name = c.row[colMap.name] || '(No Name)';
+      const rank = selected.indexOf(c) + 1;
+      return `<div class="video-row">
+        <div>
+          <div class="video-row-name">${name}</div>
+          <div class="video-row-rank">Rank #${rank} · Score ${c.result.total}%</div>
+        </div>
+        <a class="video-link" href="${c.result.videoLink}" target="_blank" rel="noopener">▶ Watch</a>
+      </div>`;
+    }).join('');
+    videoHtml = `<div class="video-summary">
+      <div class="video-summary-header">📽 Video Submissions from Selected Candidates (${withVideo.length})</div>
+      ${rows}
+    </div>`;
+  }
+  document.getElementById('videoSummary').innerHTML = videoHtml;
+
+  // Header
+  const aiCount = selected.filter(c => c.result.ai.score > 40).length;
+  document.getElementById('resultsTitle').textContent =
+    `Top ${selected.length} of ${parsed.rows.length} candidates`;
+  document.getElementById('resultsMeta').textContent =
+    `${withVideo.length} submitted video · ${aiCount} flagged for AI · Focus: ${focus}`;
+
+  setProgress(100, 'Done.');
+  await tick();
+  hideProgress();
+  document.getElementById('resultsSection').classList.add('visible');
+
+  btn.disabled = false;
+  btn.textContent = 'Run Filter →';
+}
+
+function tick() { return new Promise(r => setTimeout(r, 0)); }
+</script>
+</body>
+</html>
